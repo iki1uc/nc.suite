@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NC.SUITE V4 - 9x9 Board + Axonometrie</title>
+<style>
+/* NC.SUITE Header */
+.kopf-zeile{position:sticky;top:0;z-index:9999;background:rgba(5,5,7,.95);
+  border-bottom:2px solid #ffd24a;margin-bottom:0}
+.kopf-inner{display:flex;justify-content:space-between;align-items:center;
+  gap:12px;padding:10px;flex-wrap:wrap}
+.kopf-brand{color:#ffd24a;font-weight:900;letter-spacing:.08em;font-family:Consolas,monospace}
+.kopf-nav{display:flex;gap:6px;flex-wrap:wrap}
+.kopf-nav a{color:#22e6ff;text-decoration:none;border:1px solid #1b2a3a;
+  padding:4px 10px;font-size:12px;transition:.15s;font-family:Consolas,monospace}
+.kopf-nav a:hover{border-color:#ffd24a}
+.kopf-nav a.active{background:#ffd24a;color:#000;font-weight:700}
+.kopf-state{color:#3dffa0;border:1px solid #3dffa0;padding:4px 8px;font-size:11px;
+  letter-spacing:.1em;font-family:Consolas,monospace}
+.kopf-state.warn{color:#ffd24a;border-color:#ffd24a}
+.kopf-state.bad{color:#ff5a4d;border-color:#ff5a4d}
+.mobile-nav{display:none;width:100%;padding:0 10px 10px}
+#mobile-toggle{width:100%;background:#050507;color:#ffd24a;border:1px solid #ffd24a;
+  padding:10px;font-weight:700;cursor:pointer;font-family:Consolas,monospace}
+#mobile-panel{display:none;margin-top:4px;border:1px solid #1b2a3a}
+#mobile-panel.open{display:grid}
+#mobile-panel a{text-decoration:none;color:#22e6ff;padding:10px;
+  border-bottom:1px solid #1b2a3a;font-size:13px;font-family:Consolas,monospace}
+#mobile-panel a.active{background:#ffd24a;color:#000;font-weight:700}
+@media(max-width:760px){.kopf-nav{display:none}.mobile-nav{display:block}}
+/* NC Suite V4 Board */
+:root{--bg:#080a0e;--card:#11141c;--border:#1e2638;--gold:#ffd24a;--cyan:#22e6ff;--green:#3dffa0;--purple:#b07cff;--red:#ff5a4d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#cbd5e1;font-family:Consolas,monospace}
+.wrap{max-width:1280px;margin:0 auto;padding:12px}
+.grid-top{display:grid;grid-template-columns:320px 1fr;gap:12px}
+@media(max-width:900px){.grid-top{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);padding:10px}
+.board-9x9{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;margin:8px 0}
+.cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  font-weight:700;cursor:pointer;border:1px solid #000;font-size:13px;transition:.1s}
+.cell.v0{background:#0a0a0a;color:#333}
+.cell.v1{background:#0a1a33;color:#4a7cff}
+.cell.v2{background:#0a2214;color:var(--green)}
+.cell.v3{background:#2a2000;color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.cell.filtered{opacity:0.15}
+.cell.active{outline:2px solid var(--cyan);z-index:1}
+.counts{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.counts span{border:1px solid var(--border);padding:2px 6px;font-size:11px}
+.btn{border:1px solid var(--gold);background:var(--bg);color:var(--gold);padding:6px 10px;
+  cursor:pointer;font-family:Consolas;font-weight:700;font-size:12px}
+.btn:hover{background:var(--gold);color:#000}
+.btn-cyan{border-color:var(--cyan);color:var(--cyan)}
+.btn-cyan:hover{background:var(--cyan);color:#000}
+.inputs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.inputs label{font-size:11px;display:flex;flex-direction:column;gap:2px}
+.inputs input{width:70px;background:#050507;border:1px solid var(--border);color:#fff;padding:4px}
+.axi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+@media(max-width:700px){.axi-grid{grid-template-columns:1fr}}
+.axi-card{background:#0a0e18;border:1px solid var(--border);padding:6px}
+.axi-card h4{margin:0 0 4px 0;font-size:11px;color:var(--gold)}
+.axi-card canvas{width:100%;height:180px;background:#05070a;display:block}
+.repo-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.repo{border:1px solid var(--border);padding:8px;font-size:11px}
+.repo b{color:var(--gold)}
+.trans{border:1px dashed var(--gold);padding:8px;margin-top:10px;font-size:11px;color:var(--gold)}
+</style>
+</head>
+<body>
+<!-- ═══ NC.SUITE HEADER ═══ -->
+<header class="kopf-zeile">
+  <div class="kopf-inner">
+    <div class="kopf-brand">● NC.SUITE</div>
+    <nav class="kopf-nav">
+      <a href="./index.html">INDEX</a>
+      <a href="./home.html">HOME</a>
+      <a href="./ort.html">ORT</a>
+      <a href="./alles.html">ALLES</a>
+      <a href="./nc-suite.html">KERN</a>
+      <a href="./generator.html">GENERATOR</a>
+      <a href="./continuum.html">CONTINUUM</a>
+      <a href="./mond.html">MOND</a>
+      <a href="./src.er.html">SRC.ER</a>
+      <a href="./nc-suite-v4.html" class="active">V4</a>
+    </nav>
+    <div class="kopf-state" id="brain-state">● BRAIN.EYE.OPEN</div>
+  </div>
+  <div class="mobile-nav">
+    <button id="mobile-toggle" type="button">☰ NODE : V4</button>
+    <nav id="mobile-panel">
+      <a href="./index.html">INDEX</a>
+      <a href="./home.html">HOME</a>
+      <a href="./ort.html">ORT</a>
+      <a href="./alles.html">ALLES</a>
+      <a href="./nc-suite.html">KERN</a>
+      <a href="./generator.html">GENERATOR</a>
+      <a href="./continuum.html">CONTINUUM</a>
+      <a href="./mond.html">MOND</a>
+      <a href="./src.er.html">SRC.ER</a>
+      <a href="./nc-suite-v4.html" class="active">V4</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap">
+  <div class="grid-top">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <b>9×9 BOARD</b><span id="activeFile" style="font-size:11px;color:var(--gold)">9.html</span>
+      </div>
+      <div class="counts" id="counts"></div>
+      <div class="board-9x9" id="board"></div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">
+        <button class="btn" data-filter="all">ALL</button>
+        <button class="btn" data-filter="0">0</button>
+        <button class="btn" data-filter="1">1</button>
+        <button class="btn" data-filter="2">2</button>
+        <button class="btn btn-cyan" data-filter="3">3</button>
+      </div>
+      <div class="trans" id="translator">>< 888 >< Wähle Zelle → 3×3 Block + 6×6 Origin</div>
+      <div style="margin-top:10px;display:flex;gap:6px">
+        <button class="btn" id="btn-heute">Heute laden</button>
+        <button class="btn btn-cyan" id="btn-csv">CSV Export B/H/T</button>
+      </div>
+    </div>
+    <div class="card">
+      <b>B / H / T frei wählbar</b>
+      <div class="inputs">
+        <label>B <input id="B" type="number" value="148"></label>
+        <label>H <input id="H" type="number" value="92"></label>
+        <label>T <input id="T" type="number" value="44"></label>
+        <button class="btn" id="apply">↻ ANWENDEN</button>
+        <button class="btn btn-cyan" id="reset">RESET</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+        <button class="btn btn-cyan preset" data-b="148" data-h="92" data-t="44">148/92/44</button>
+        <button class="btn preset" data-b="124" data-h="84" data-t="62">124/84/62</button>
+        <button class="btn preset" data-b="102" data-h="68" data-t="54">102/68/54</button>
+      </div>
+      <div class="axi-grid">
+        <div class="axi-card"><h4>QUADRANT 180° — axi B:148 H:92 T:44 — Pipeline + Pumpe + Katapult + Panel/Nadel</h4><canvas id="c180" width="400" height="360"></canvas></div>
+        <div class="axi-card"><h4>QUADRANT 90°</h4><canvas id="c90" width="400" height="360"></canvas></div>
+        <div class="axi-card"><h4>QUADRANT 270°</h4><canvas id="c270" width="400" height="360"></canvas></div>
+        <div class="axi-card"><h4>QUADRANT 360°</h4><canvas id="c360" width="400" height="360"></canvas></div>
+      </div>
+      <div class="repo-cards" id="repos"></div>
+    </div>
+  </div>
+</div>
+<script>
+// === BOARD DATA ===
+const BOARD_DATA = [3,1,1,1,1,1,1,1,3,1,3,1,1,1,1,1,3,1,1,1,3,1,1,1,3,1,1,2,2,2,3,2,3,2,2,2,2,2,2,2,3,2,2,2,2,2,2,2,3,2,3,2,2,2,0,0,3,0,0,0,3,0,0,0,3,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,3];
+let filter = 3;
+let activeIdx = null;
+let B=148,H=92,T=44;
+const ORIG = {B:148,H:92,T:44};
+function renderBoard(){
+  const boardEl=document.getElementById('board');
+  boardEl.innerHTML='';
+  const counts={0:0,1:0,2:0,3:0};
+  BOARD_DATA.forEach(v=>counts[v]++);
+  document.getElementById('counts').innerHTML = Object.entries(counts).map(([k,c])=>`<span>${k}: ${c}</span>`).join('') + `<span style="color:var(--gold)">81 cells</span>`;
+  BOARD_DATA.forEach((v,i)=>{
+    const d=document.createElement('div');
+    d.className=`cell v${v} ${filter!==null && filter!==v ? 'filtered':''} ${activeIdx===i?'active':''}`;
+    d.textContent=v;
+    d.onclick=()=>{
+      activeIdx=i;
+      const r=Math.floor(i/9), c=i%9;
+      const blockId=Math.floor(r/3)*3+Math.floor(c/3);
+      const localR=r%3, localC=c%3;
+      const originR=r-1, originC=c-1;
+      const originOk=originR>=0&&originR<6&&originC>=0&&originC<6;
+      document.getElementById('translator').innerHTML=
+        `>< 888 >< 9×9 [${r},${c}] #${i} Wert:${v} >< 888 >< 3×3 Block:${blockId} [${localR},${localC}] >< 888 >< 6×6 Origin:[${originR},${originC}] ${originOk?'OK':'OUT'} >< 888 >< Vor: ${r},${c} → Block ${blockId} Zu: Block ${blockId}+[${localR},${localC}] → ${r},${c}`;
+      renderBoard();
+    };
+    boardEl.appendChild(d);
+  });
+}
+// === AXONOMETRIE ===
+function drawAxi(canvas, angleDeg, B,H,T){
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,Hc=canvas.height;
+  ctx.clearRect(0,0,W,Hc);
+  ctx.fillStyle='#05070a'; ctx.fillRect(0,0,W,Hc);
+  const ang=angleDeg*Math.PI/180;
+  const cosA=Math.cos(ang), sinA=Math.sin(ang);
+  // Simple isometric projection
+  const scale=0.6;
+  const ox=W/2, oy=Hc*0.6;
+  function proj(x,y,z){
+    // rotate around Y by angle
+    const rx = x*cosA + z*sinA;
+    const rz = -x*sinA + z*cosA;
+    // iso
+    const px = ox + (rx - rz)*0.866*scale;
+    const py = oy - (rx+rz)*0.5*scale - y*scale;
+    return [px,py];
+  }
+  const b=B/2, h=H, t=T/2;
+  // Block points
+  const pts=[
+    [-b,0,-t], [b,0,-t], [b,0,t], [-b,0,t],
+    [-b,h,-t], [b,h,-t], [b,h,t], [-b,h,t]
+  ].map(p=>proj(...p));
+  ctx.strokeStyle='#1e2638'; ctx.lineWidth=1;
+  // bottom
+  ctx.beginPath(); ctx.moveTo(...pts[0]); ctx.lineTo(...pts[1]); ctx.lineTo(...pts[2]); ctx.lineTo(...pts[3]); ctx.closePath(); ctx.stroke();
+  // top
+  ctx.beginPath(); ctx.moveTo(...pts[4]); ctx.lineTo(...pts[5]); ctx.lineTo(...pts[6]); ctx.lineTo(...pts[7]); ctx.closePath(); ctx.strokeStyle='#ffd24a'; ctx.stroke();
+  // sides
+  for(let i=0;i<4;i++){ ctx.beginPath(); ctx.moveTo(...pts[i]); ctx.lineTo(...pts[i+4]); ctx.strokeStyle='#333'; ctx.stroke(); }
+  // Pipeline green quer durch Block
+  const p1=proj(-b,h*0.5,0), p2=proj(b,h*0.5,0);
+  ctx.strokeStyle='#3dffa0'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(...p1); ctx.lineTo(...p2); ctx.stroke();
+  ctx.fillStyle='#3dffa0'; ctx.beginPath(); ctx.arc(...p2,5,0,Math.PI*2); ctx.fill();
+  // Pumpe lila Kreis + Kolben linke Fläche
+  const pump=proj(-b,h*0.6,0);
+  ctx.fillStyle='#b07cff'; ctx.beginPath(); ctx.arc(...pump,12,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#b07cff'; ctx.lineWidth=2; const pump2=proj(-b-18,h*0.6,0); ctx.beginPath(); ctx.moveTo(...pump); ctx.lineTo(...pump2); ctx.stroke();
+  // Katapult goldener Arm rechte Fläche
+  const kat=proj(b,h*0.7,0);
+  ctx.strokeStyle='#ffd24a'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(...kat); const kat2=proj(b+30,h*0.9,10); ctx.lineTo(...kat2); ctx.stroke();
+  ctx.fillStyle='#ffd24a'; ctx.beginPath(); ctx.arc(...kat2,4,0,Math.PI*2); ctx.fill();
+  // Panel Oberseite + Nadel rotiert im Winkel
+  const panel=proj(0,h,0);
+  ctx.fillStyle='rgba(34,230,255,0.15)'; ctx.fillRect(panel[0]-30,panel[1]-18,60,12);
+  ctx.strokeStyle='#22e6ff'; ctx.strokeRect(panel[0]-30,panel[1]-18,60,12);
+  // Nadel
+  const needleLen=22;
+  const nx=panel[0]+Math.cos(ang)*needleLen;
+  const ny=panel[1]+Math.sin(ang)*needleLen*0.5;
+  ctx.strokeStyle='#ff5a4d'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(...panel); ctx.lineTo(nx,ny); ctx.stroke();
+  ctx.fillStyle='#ff5a4d'; ctx.beginPath(); ctx.arc(nx,ny,3,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#666'; ctx.font='10px Consolas'; ctx.fillText(`${angleDeg}° B:${B} H:${H} T:${T}`,8,Hc-8);
+}
+function renderAll(){
+  B=parseInt(document.getElementById('B').value)||148;
+  H=parseInt(document.getElementById('H').value)||92;
+  T=parseInt(document.getElementById('T').value)||44;
+  drawAxi(document.getElementById('c180'),180,B,H,T);
+  drawAxi(document.getElementById('c90'),90,B,H,T);
+  drawAxi(document.getElementById('c270'),270,B,H,T);
+  drawAxi(document.getElementById('c360'),360,B,H,T);
+  document.querySelectorAll('.axi-card h4').forEach(h=>{
+    const deg=h.textContent.match(/\d+°/)?.[0]||'';
+    if(deg) h.textContent=`QUADRANT ${deg} — axi B:${B} H:${H} T:${T} — Pipeline + Pumpe + Katapult + Panel/Nadel`;
+  });
+  document.getElementById('repos').innerHTML=[
+    {name:'HOME',b:B,h:H,t:T},{name:'ORT',b:124,h:84,t:62},{name:'PRUEF',b:102,h:68,t:54}
+  ].map(r=>`<div class="repo"><b>${r.name}</b><br>axi B:${r.b} H:${r.h} T:${r.t}<br><button class="btn" onclick="document.getElementById('B').value=${r.b};document.getElementById('H').value=${r.h};document.getElementById('T').value=${r.t};renderAll()">In Eingabe übernehmen</button></div>`).join('');
+}
+document.getElementById('apply').onclick=renderAll;
+document.getElementById('reset').onclick=()=>{
+  document.getElementById('B').value=ORIG.B;
+  document.getElementById('H').value=ORIG.H;
+  document.getElementById('T').value=ORIG.T;
+  renderAll();
+};
+document.querySelectorAll('.preset').forEach(btn=>{
+  btn.onclick=()=>{
+    document.getElementById('B').value=btn.dataset.b;
+    document.getElementById('H').value=btn.dataset.h;
+    document.getElementById('T').value=btn.dataset.t;
+    renderAll();
+  };
+});
+document.querySelectorAll('[data-filter]').forEach(btn=>{
+  btn.onclick=()=>{
+    const f=btn.dataset.filter;
+    filter = f==='all'?null:parseInt(f);
+    renderBoard();
+  };
+});
+document.getElementById('btn-csv').onclick=()=>{
+  let csv='board,size,zelle,zeile,spalte,index,wert,B,H,T\n';
+  BOARD_DATA.forEach((v,i)=>{
+    const r=Math.floor(i/9), c=i%9;
+    csv+=`nc_suite_v4_board,9x9,${v},${r},${c},${i},${v},${B},${H},${T}\n`;
+  });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=`nc-suite-v4_B${B}_H${H}_T${T}.csv`; a.click();
+};
+document.getElementById('btn-heute').onclick=()=>{
+  // Original p object + WURZEL_STATE patch
+  const p={HOME:'Verbunden',ORT:'Verbunden',PRUEF:'Verbunden'};
+  // --- PATCH: Live-Sync mit wurzel-state.js ---
+  if(window.WURZEL_STATE && typeof window.WURZEL_STATE.set==='function'){
+    window.WURZEL_STATE.set('HOME','Verbunden');
+    window.WURZEL_STATE.set('ORT','Verbunden');
+    window.WURZEL_STATE.set('PRUEF','Verbunden');
+    console.log('[V4] WURZEL_STATE.set() aufgerufen -> BRAIN.EYE.OPEN');
+  } else {
+    console.log('[V4] WURZEL_STATE nicht gefunden, nutze lokales p:',p);
+  }
+  // Update UI
+  const hs=document.getElementById('brain-state');
+  if(hs){ hs.textContent='● BRAIN.EYE.OPEN'; hs.className='kopf-state'; }
+  alert('Heute laden → HOME/ORT/PRUEF = Verbunden (WURZEL_STATE gepatcht)');
+};
+window.addEventListener('resize',()=>renderAll());
+renderBoard();
+renderAll();
+</script>
+<script src="wurzel-state.js"></script>
+<script>
+  // NC.SUITE State-Brücke
+  const mt = document.getElementById('mobile-toggle');
+  const mp = document.getElementById('mobile-panel');
+  if(mt && mp){
+    mt.onclick = () => mp.classList.toggle('open');
+  }
+  function updateBrainState(){
+    if(!window.WURZEL_STATE) return;
+    const Z = WURZEL_STATE.zustand();
+    const hs = document.getElementById('brain-state');
+    if(!hs) return;
+    if(Z.PRUEF === 'FEHLER' || Z.HOME === 'CLOSED' || Z.ORT === 'LEER'){
+      hs.textContent = '● BRAIN.EYE.CLOSED'; hs.className = 'kopf-state bad';
+    } else if(Z.PRUEF === 'UNGEPRUEFT' || Z.HOME === 'OPEN' || Z.ORT === 'GEWÄHLT'){
+      hs.textContent = '● BRAIN.EYE.WAIT'; hs.className = 'kopf-state warn';
+    } else {
+      hs.textContent = '● BRAIN.EYE.OPEN'; hs.className = 'kopf-state';
+    }
+  }
+  if(window.WURZEL_STATE){
+    window.WURZEL_STATE.onRemote = updateBrainState;
+    updateBrainState();
+  }
+  // Navigation active state
+  const current = 'nc-suite-v4';
+  document.querySelectorAll('.kopf-nav a, #mobile-panel a').forEach(a=>{
+    const target = a.getAttribute('href').replace('./','').replace('.html','').toLowerCase();
+    if(target === current) a.classList.add('active');
+  });
+</script>
+</body>
+</html>
