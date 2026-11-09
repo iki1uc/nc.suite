@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Redirect-Decoder</title>
+<style>
+:root{--bg:#070b07;--panel:#0d150d;--line:#1d2f1d;--fg:#cdeccd;--dim:#7ea37e;--acc:#ffdd33;--ok:#33ddaa;--bad:#ff5555;--warn:#ffb020;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f3f6f1;--panel:#fff;--line:#c9d6c5;--fg:#17231a;--dim:#5b7360;--acc:#8a6d00;--ok:#0a7d5a;--bad:#c4281c;--warn:#a85f00;color-scheme:light}}
+:root[data-theme="dark"]{--bg:#070b07;--panel:#0d150d;--line:#1d2f1d;--fg:#cdeccd;--dim:#7ea37e;--acc:#ffdd33;--ok:#33ddaa;--bad:#ff5555;--warn:#ffb020;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;padding:16px;max-width:900px;margin-inline:auto}
+h1{font-size:13px;letter-spacing:.2em;color:var(--acc);margin:0 0 4px}
+.sub{color:var(--dim);font-size:11px;margin-bottom:12px}
+textarea{width:100%;height:130px;background:var(--panel);border:1px solid var(--line);color:var(--fg);padding:8px;font:inherit;font-size:12px;resize:vertical;border-radius:4px}
+button{margin:8px 6px 8px 0;padding:6px 14px;background:var(--panel);border:1px solid var(--line);color:var(--fg);font:inherit;font-size:11px;letter-spacing:.08em;cursor:pointer;border-radius:3px}
+button:hover{border-color:var(--acc);color:var(--acc)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px;margin-top:10px}
+.lbl{color:var(--dim);font-size:10px;letter-spacing:.15em;text-transform:uppercase;margin-top:8px}
+.dim{color:var(--dim)}.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad);font-weight:bold}
+.big{color:var(--acc);font-size:15px;font-weight:bold;word-break:break-all}
+.wrap{word-break:break-all}
+.meter{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:6px 0}
+.meter i{display:block;height:100%}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:11px}
+td{border-top:1px dotted var(--line);padding:2px 8px 2px 0;vertical-align:top}
+td:first-child{color:var(--dim);white-space:nowrap}
+</style>
+</head>
+<body>
+<h1>REDIRECT · DECODER v2</h1>
+<div class="sub">Reine Textanalyse. Nichts wird geöffnet, geladen oder ausgeführt.</div>
+<textarea id="in" spellcheck="false" placeholder="HTML-/JS-Schnipsel hier einfügen …"></textarea>
+<button id="demo">Beispiel laden</button><button id="clear">Leeren</button>
+<div id="out"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const SHORT=['bit.ly','tinyurl.com','t.co','goo.gl','is.gd','ow.ly','cutt.ly','rebrand.ly','shorturl.at','t.ly','rb.gy'];
+const HOSTING=['fbsbx.com','googleusercontent.com','dropboxusercontent.com','githubusercontent.com','discordapp.com','blob.core.windows.net','pages.dev','workers.dev','web.app','netlify.app','vercel.app','glitch.me','weebly.com','wixsite.com','github.io'];
+const BADTLD=['zip','mov','xyz','top','click','gq','tk','ml','cf','ga','icu','cyou','sbs','rest','cam'];
+const LURE=/verif|login|konto|account|secure|invoice|rechnung|zahlung|payment|abmachung|vertrag|passwor|paypal|bank|bonus|gewinn|urgent|dringend|support|update/i;
+const PAT=[
+ [/location\.replace\s*\(\s*["']([^"']+)["']/gi,'location.replace()'],
+ [/location\.assign\s*\(\s*["']([^"']+)["']/gi,'location.assign()'],
+ [/location(?:\.href)?\s*=\s*["']([^"']+)["']/gi,'location(.href) ='],
+ [/window\.open\s*\(\s*["']([^"']+)["']/gi,'window.open()'],
+ [/<meta[^>]+http-equiv\s*=\s*["']?refresh["']?[^>]*content\s*=\s*["'][^"']*?url\s*=\s*([^"'>]+)/gi,'meta refresh'],
+ [/<(?:i?frame|embed|object)[^>]+(?:src|data)\s*=\s*["']([^"']+)["']/gi,'iframe/embed'],
+ [/<form[^>]+action\s*=\s*["']([^"']+)["']/gi,'form action'],
+ [/https?:\/\/[^\s"'<>\\)]+/gi,'URL im Text']
+];
+
+function deob(raw){
+  const notes=[];let t=raw,prev;
+  for(let i=0;i<4;i++){
+    prev=t;
+    t=t.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi,m=>{const a=document.createElement('textarea');a.innerHTML=m;return a.value});
+    if(t!==prev)notes.push('HTML-Entities aufgelöst');
+    const p2=t;
+    t=t.replace(/\\u([0-9a-f]{4})/gi,(_,h)=>String.fromCharCode(parseInt(h,16))).replace(/\\x([0-9a-f]{2})/gi,(_,h)=>String.fromCharCode(parseInt(h,16))).replace(/\\\//g,'/');
+    if(t!==p2)notes.push('JS-Escapes (\\u, \\x, \\/) aufgelöst');
+    t=t.replace(/atob\(\s*["']([A-Za-z0-9+\/=]+)["']\s*\)/g,(m,b)=>{try{const s=atob(b);notes.push('atob() dekodiert');return '"'+s.replace(/"/g,'')+'"'}catch(e){return m}});
+    t=t.replace(/(?:unescape|decodeURIComponent)\(\s*["']([^"']+)["']\s*\)/g,(m,s)=>{try{notes.push('unescape()/decodeURIComponent() dekodiert');return '"'+decodeURIComponent(s).replace(/"/g,'')+'"'}catch(e){return m}});
+    t=t.replace(/String\.fromCharCode\(([\d,\s]+)\)/g,(m,n)=>{notes.push('fromCharCode() dekodiert');return '"'+String.fromCharCode(...n.split(',').map(Number)).replace(/"/g,'')+'"'});
+    if(t===prev)break;
+  }
+  return {text:t,notes:[...new Set(notes)]};
+}
+
+function defang(u){
+  try{const x=new URL(u);return u.replace(/^http/i,'hxxp').replace(x.hostname,x.hostname.replace(/\./g,'[.]'))}
+  catch(e){return u.replace(/^http/i,'hxxp').replace(/\./g,'[.]')}
+}
+
+function fmtExpiry(ts){
+  const d=new Date(ts*1000),diff=ts*1000-Date.now(),days=Math.round(Math.abs(diff)/864e5);
+  const when=d.toLocaleString('de-DE');
+  return diff<0?{cls:'warn',txt:when+' – abgelaufen vor '+days+' Tag(en), Link vermutlich tot'}:{cls:'ok',txt:when+' – noch ca. '+days+' Tag(e) gültig'};
+}
+
+function analyze(u,depth=0){
+  const r={url:u,flags:[],score:0,params:[],expiry:null,nested:[],parts:[],host:'',path:''};
+  const add=(cls,txt,pts)=>{r.flags.push([cls,txt]);r.score+=pts};
+  let url;
+  try{url=new URL(u)}catch(e){add('bad','URL nicht parsebar (relativ oder defekt)',10);return r}
+  r.host=url.hostname;r.path=url.pathname;r.parts=url.pathname.split('/').filter(Boolean);
+  const h=url.hostname.toLowerCase(),tld=h.split('.').pop();
+  if(url.protocol==='http:')add('warn','Unverschlüsselt (http)',10);
+  if(/^(javascript|data|vbscript):/i.test(url.protocol))add('bad','Gefährliches Schema: '+url.protocol,50);
+  if(url.username||url.password)add('bad','Zugangsdaten-Trick: Alles vor dem @ ist nicht das Ziel, Ziel ist '+h,40);
+  if(/^\d{1,3}(\.\d{1,3}){3}$/.test(h)||/^\[.*\]$/.test(h))add('bad','Reine IP-Adresse statt Domain',25);
+  if(h.includes('xn--'))add('bad','Punycode im Host – mögliche Lookalike-Domain (Homograph)',30);
+  if(SHORT.includes(h))add('warn','Link-Verkürzer – das echte Ziel ist verborgen',20);
+  if(BADTLD.includes(tld))add('warn','Endung .'+tld+' wird überdurchschnittlich oft für Missbrauch genutzt',10);
+  if(h.split('.').length>4)add('warn','Sehr viele Subdomains',10);
+  const host=HOSTING.find(x=>h===x||h.endsWith('.'+x));
+  if(host)add('warn','Nutzer-Hosting ('+host+'): Die Domain ist bekannt, der Inhalt stammt aber von Dritten und sagt nichts über Vertrauen',15);
+  const dec=decodeURIComponentSafe(url.pathname);
+  if(/\.(jpe?g|png|gif|webp|svg|bmp|pdf)\/.+\.(html?|hta|js|svg)$/i.test(dec))add('bad','Bild-/Dokument-Endung im Pfad, aber Ziel ist eine HTML-/Skriptdatei – Tarnung',30);
+  const last=r.parts[r.parts.length-1]||'';
+  if(/\.(exe|scr|bat|cmd|msi|jar|apk|vbs|ps1|lnk|iso)$/i.test(last))add('bad','Ausführbare Datei als Ziel',40);
+  else if(/\.(html?|hta|xhtml)$/i.test(last))add('warn','Ziel ist eine HTML-Seite, die Skripte enthalten kann',10);
+  if(LURE.test(dec))add('warn','Köder-Wort im Pfad ('+(dec.match(LURE)[0])+')',15);
+  url.searchParams.forEach((v,k)=>{
+    r.params.push([k,v]);
+    if(/^https?:\/\//i.test(v)&&depth<1){const n=analyze(v,depth+1);r.nested.push([k,n]);add('warn','Weitere URL im Parameter „'+k+'“ (Weiterleitungskette)',10)}
+    if(/^(oe|exp|expires)$/i.test(k)&&!r.expiry){
+      let ts=/^[0-9a-f]{8}$/i.test(v)&&k.toLowerCase()==='oe'?parseInt(v,16):Number(v);
+      if(ts>1e9&&ts<4e9)r.expiry=fmtExpiry(ts);
+    }
+  });
+  return r;
+}
+function decodeURIComponentSafe(s){try{return decodeURIComponent(s)}catch(e){return s}}
+
+function urlCard(a,labels,nested){
+  let h='<div class="'+(nested?'':'card')+'" style="'+(nested?'margin-left:12px;border-left:2px solid var(--line);padding-left:10px;margin-top:6px':'')+'">';
+  if(!nested)h+='<div class="lbl">Gefunden via: '+esc([...labels].join(', '))+'</div>';
+  if(!a.host){h+='<div class="wrap">'+esc(a.url)+'</div>';}
+  else{
+    h+='<div class="lbl">Ziel-Domain</div><div class="big">'+esc(a.host)+'</div><div class="wrap">'+esc(a.path)+'</div>';
+    if(a.parts.length){h+='<div class="lbl">Pfad ('+a.parts.length+' Teile)</div>';a.parts.forEach((p,i)=>h+='<div class="wrap dim">'+(i+1)+'. '+esc(p)+'</div>')}
+  }
+  if(a.expiry)h+='<div class="lbl">Ablauf (Parameter oe/exp)</div><div class="'+a.expiry.cls+'">'+esc(a.expiry.txt)+'</div>';
+  if(a.params.length){
+    h+='<div class="lbl">Parameter ('+a.params.length+')</div><div class="tbl"><table>';
+    a.params.forEach(([k,v])=>{const long=v.length>20&&!/^https?:/i.test(v);h+='<tr><td>'+esc(k)+'</td><td class="wrap">'+esc(v.length>90?v.slice(0,90)+'…':v)+(long?' <span class="dim">[Token/Signatur]</span>':'')+'</td></tr>'});
+    h+='</table></div>';
+  }
+  if(a.flags.length){h+='<div class="lbl">Auffälligkeiten</div>';a.flags.forEach(([c,t])=>h+='<div class="'+c+'">'+(c==='bad'?'⚠ ':'• ')+esc(t)+'</div>')}
+  else if(a.host)h+='<div class="ok" style="margin-top:8px">✓ Keine offensichtlichen Muster</div>';
+  a.nested.forEach(([k,n])=>{h+='<div class="lbl">Verschachtelt in „'+esc(k)+'“</div>'+urlCard(n,[],true)});
+  if(!nested){
+    const d=defang(a.url);
+    h+='<div class="lbl">Entschärft (zum Teilen/Melden)</div><div class="wrap">'+esc(d)+'</div>';
+    h+='<button data-copy="'+esc(d)+'">Entschärft kopieren</button>';
+  }
+  return h+'</div>';
+}
+
+function render(){
+  const raw=$('in').value,out=$('out');
+  if(!raw.trim()){out.innerHTML='';return}
+  const {text,notes}=deob(raw);
+  const hits=new Map();
+  for(const [re,label] of PAT){re.lastIndex=0;let m;while((m=re.exec(text))){const u=m[1]?m[1].trim():m[0];if(!hits.has(u))hits.set(u,new Set());hits.get(u).add(label)}}
+  let page=0;const pf=[];
+  const padd=(c,t,p)=>{pf.push([c,t]);page+=p};
+  if(/location\.replace/i.test(text))padd('warn','replace() entfernt die Seite aus dem Verlauf – „Zurück“ führt nicht zurück',5);
+  if(/name\s*=\s*["']referrer["'][^>]*content\s*=\s*["'](origin|no-referrer|same-origin)/i.test(text))padd('warn','Referrer-Policy verbirgt, woher der Besucher kam',5);
+  const body=text.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  if(body&&!body[1].replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<[^>]+>/g,'').trim())padd('warn','Kein sichtbarer Inhalt – reine Weiterleitungshülle',10);
+  if(notes.length)padd('warn','Verschleierung erkannt ('+notes.length+' Schicht(en))',15);
+  if(/\beval\s*\(|document\.write\s*\(|new\s+Function\s*\(/i.test(text))padd('bad','eval()/document.write()/Function() – Code wird zur Laufzeit gebaut',20);
+  if(/setTimeout\s*\(|setInterval\s*\(/i.test(text)&&hits.size)padd('warn','Verzögerte Ausführung (Timer)',5);
+
+  const list=[];
+  hits.forEach((labels,u)=>{if(labels.size>1)labels.delete('URL im Text');list.push([analyze(u),labels])});
+  list.sort((a,b)=>b[0].score-a[0].score);
+  const top=list.length?list[0][0].score:0;
+  const total=Math.min(100,top+page);
+  const lvl=total>=60?['HOCH','var(--bad)']:total>=30?['MITTEL','var(--warn)']:['NIEDRIG','var(--ok)'];
+  let h='<div class="card"><div class="lbl">Einschätzung</div><div class="big" style="color:'+lvl[1]+'">'+lvl[0]+' · '+total+'/100</div><div class="meter"><i style="width:'+total+'%;background:'+lvl[1]+'"></i></div>';
+  h+='<div class="dim" style="font-size:11px">Heuristik, kein Beweis. „Niedrig“ heißt nicht „sicher“.</div>';
+  if(notes.length)h+='<div class="lbl">Entschleierung</div>'+notes.map(n=>'<div class="dim">↳ '+esc(n)+'</div>').join('');
+  if(pf.length)h+='<div class="lbl">Seiten-Muster</div>'+pf.map(([c,t])=>'<div class="'+c+'">'+(c==='bad'?'⚠ ':'• ')+esc(t)+'</div>').join('');
+  h+='</div>';
+  if(!list.length)h+='<div class="card warn">Keine Ziel-URL erkannt. Das heißt nicht, dass der Code harmlos ist.</div>';
+  list.forEach(([a,l])=>h+=urlCard(a,l,false));
+  out.innerHTML=h;
+}
+
+$('in').addEventListener('input',render);
+$('clear').onclick=()=>{$('in').value='';render()};
+$('demo').onclick=()=>{
+  $('in').value=String.raw`<html><head><meta charset="utf-8" /><meta name="referrer" content="origin" /></head><body><script type="text/javascript">document.location.replace("https:\/\/cdn.fbsbx.com\/v\/t65.102178-21\/845619524_1715086883553367_8327762995232086323_n.jpg\/industry_abmachung_verided_segment.html?_nc_ht=cdn.fbsbx.com&sdl=0&ccb=14-4&oe=6AF5C23F&_nc_sid=4ee932");<\/script></body></html>`;
+  render();
+};
+$('out').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-copy]');if(!b)return;
+  try{navigator.clipboard.writeText(b.dataset.copy);b.textContent='Kopiert ✓'}catch(err){b.textContent='Kopieren nicht möglich'}
+});
+</script>
+</body>
+</html>

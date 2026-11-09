@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NC COMMAND · CONT UND GUT</title>
+<style>
+:root{--bg:#0b1020;--bg2:#1a3150;--panel:#141d32;--panel2:#1a2740;--line:#31415f;--ink:#edf3ff;--muted:#a9b8d2;--cyan:#66e0d0;--gold:#f4c96b;--red:#ff8585;--green:#8be0a1;--code:#080e1b;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#eef3fa;--bg2:#d4e4f4;--panel:#fff;--panel2:#e8f0f9;--line:#b9c8dc;--ink:#14213a;--muted:#4c5f7d;--cyan:#087a6d;--gold:#8a6200;--red:#b3261e;--green:#1b7a3a;--code:#f1f5fb;color-scheme:light}}
+:root[data-theme="dark"]{--bg:#0b1020;--bg2:#1a3150;--panel:#141d32;--panel2:#1a2740;--line:#31415f;--ink:#edf3ff;--muted:#a9b8d2;--cyan:#66e0d0;--gold:#f4c96b;--red:#ff8585;--green:#8be0a1;--code:#080e1b;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg) radial-gradient(circle at 80% 0,var(--bg2) 0,var(--bg) 50%) no-repeat;color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:26px max(18px,calc((100vw - 1160px)/2)) 18px;border-bottom:1px solid var(--line)}
+.kicker{color:var(--cyan);font-weight:800;letter-spacing:.18em;font-size:.75rem}
+h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.05;margin:.3rem 0}
+.sub{color:var(--muted);max-width:820px;margin:0}
+main{max-width:1160px;margin:auto;padding:18px 16px 50px}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0 14px}
+.metric,.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.metric strong{display:block;font-size:1.8rem;color:var(--cyan)}.metric span{color:var(--muted);font-size:.85rem}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+button{font:inherit}
+nav button,.action{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:9px 12px;border-radius:10px;cursor:pointer;font-weight:700}
+nav button[aria-selected=true]{border-color:var(--cyan);color:var(--cyan);background:var(--panel2)}
+nav button:hover,.action:hover{border-color:var(--cyan)}
+.tab{display:none}.tab.active{display:block}
+h2{margin:.1rem 0 .5rem;font-size:1.4rem}
+p{margin:.4rem 0}.muted,.small{color:var(--muted)}.small{font-size:.82rem}
+pre,code{font-family:ui-monospace,Consolas,monospace}
+pre{white-space:pre-wrap;background:var(--code);border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+label{display:block;color:var(--muted);font-size:.9rem;margin:8px 0 4px}
+input[type=number],input[type=text],select{width:100%;padding:10px;border-radius:9px;border:1px solid var(--line);background:var(--code);color:var(--ink);font:inherit}
+input[type=range]{width:100%;accent-color:var(--cyan)}
+.result{padding:12px;border-radius:10px;background:var(--code);border:1px solid var(--line);margin-top:10px}
+.good{color:var(--green)}.warn{color:var(--gold)}.bad{color:var(--red)}
+svg{width:100%;height:auto;background:var(--code);border:1px solid var(--line);border-radius:12px;margin-top:8px}
+.cells{display:grid;grid-template-columns:repeat(3,64px);gap:6px;margin:10px 0}
+.cells button,.chip{border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:10px;cursor:pointer;font-weight:700}
+.cells button{height:64px}.cells .f{border-color:var(--gold);color:var(--gold)}.cells .t{border-color:var(--cyan);color:var(--cyan)}
+.pent{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:12px 0}
+.chip{padding:10px 6px}.chip[aria-pressed=true]{border-color:var(--cyan);color:var(--cyan)}
+.bar{display:flex;height:22px;border-radius:8px;overflow:hidden;background:var(--code);border:1px solid var(--line);position:relative;margin:10px 0}
+.bar i{display:block;height:100%}
+.mark{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--red)}
+table{border-collapse:collapse;width:100%;margin-top:8px}td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}th{color:var(--cyan)}
+tr.cur td{background:var(--panel2);color:var(--cyan)}
+.mx{overflow-x:auto}.mx table{min-width:560px;text-align:center}.mx td,.mx th{text-align:center;padding:4px}
+.mx td button{width:100%;height:30px;border-radius:6px;border:1px solid var(--line);background:var(--code);color:var(--muted);cursor:pointer}
+.mx td button.p{background:var(--green);color:#041;border-color:var(--green)}.mx td button.x{background:var(--red);color:#300;border-color:var(--red)}
+.mx th:first-child,.mx td:first-child{text-align:left;white-space:nowrap}
+footer{margin-top:20px;color:var(--muted);font-size:.82rem}
+@media(max-width:600px){.metrics{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+ <div class="kicker">NC COMMAND · SYSTEMBAU</div>
+ <h1>CONT UND GUT.</h1>
+ <p class="sub">Neun Bereiche, ein prüfbarer Kern. Jede Anzeige wird aus echter Logik berechnet, und die Prüfmatrix zeigt ehrlich, welche der 81 Felder wirklich getestet sind. Symbolik darf inspirieren, Mathematik muss nachrechenbar bleiben.</p>
+</header>
+<main>
+ <section class="metrics">
+  <div class="metric"><strong>9</strong><span>Hauptbereiche / Grundmodule</span></div>
+  <div class="metric"><strong id="m81">–</strong><span>von 81 Feldern (9 × 9) mit echtem Test</span></div>
+  <div class="metric"><strong id="m729">–</strong><span>729 Zufallsproben (9 × 9 × 9), Verstöße</span></div>
+ </section>
+ <nav id="nav" role="tablist" aria-label="NC Hauptbereiche"></nav>
+
+ <section id="axiom" class="tab panel" role="tabpanel">
+  <h2>1 · AXIOM · kurz, prüfbar, gleich</h2>
+  <p>Daten, Meta und Mechanik bleiben getrennt. Die Mechanik ist dieselbe HOME-40-Funktion.</p>
+  <label for="axval">Eingabewert x (leer = ungültig)</label><input id="axval" type="number" value="43" step="any">
+  <pre id="axout"></pre>
+ </section>
+
+ <section id="home" class="tab panel" role="tabpanel">
+  <h2>2 · HOME 40 · einrasten, nicht ungefähr</h2>
+  <p>Alles ab 39 wird auf genau 40 gesetzt, darunter bleibt x unverändert. Das ist eine Klemm-Funktion mit kleinem Sprung bei 39 (38,99 bleibt, 39 wird 40). Eine „Zone 39 bis 41“ ist es nicht, denn auch 43 und 999 ergeben 40.</p>
+  <pre>home40(x) = x   für x &lt; 39
+          = 40  für x ≥ 39
+f(f(x)) = f(x)</pre>
+  <div class="grid"><div><label for="homeval">Wert x</label><input id="homeval" type="number" value="43" step="any"></div><div><label for="homerange">Regler −10 bis 100</label><input id="homerange" type="range" min="-10" max="100" step="0.5" value="43"></div></div>
+  <div class="result" id="homeout"></div><div id="homeplot"></div>
+ </section>
+
+ <section id="mist" class="tab panel" role="tabpanel">
+  <h2>3 · MIST RAUS · Fehler → Korrektur → Prüfung</h2>
+  <p>Es werden nur ganze Zahlen ersetzt (43 → 40, 999 → 9, ± → exakt). „143“ oder „4.43“ bleiben unberührt, und ein zweiter Durchlauf ändert nichts mehr.</p>
+  <label for="misttext">Regeltext</label><input id="misttext" type="text" value="Regel mit 43 und 999 und ± (aber 143 bleibt)">
+  <div class="result" id="mistout"></div>
+ </section>
+
+ <section id="gpu" class="tab panel" role="tabpanel">
+  <h2>4 · GPU-PUMPE · RUN nur mit Pumpe</h2>
+  <p>Reine Modell-Simulation ohne Zugriff auf echte Hardware. Pro Tick gilt: Wärme = 1 + 0,8 · Last, Kühlung durch die Pumpe = 3, Mindesttemperatur 40 °C. Über 85 °C löst der Not-Halt aus.</p>
+  <label for="load">Last: <b id="loadv">3</b> von 10</label><input id="load" type="range" min="1" max="10" value="3">
+  <p><button class="action" id="pumptog">Pumpe an/aus</button> <button class="action" id="pumprun">RUN 9 Ticks</button> <button class="action" id="pumpidle">Leerlauf 3 Ticks</button> <button class="action" id="pumpreset">Reset</button></p>
+  <div class="grid"><div class="result">Pumpe: <b id="pst"></b></div><div class="result">Temperatur: <b id="ptmp"></b></div><div class="result">Ticks / Score: <b id="psc"></b></div></div>
+  <div class="result" id="pumpout"></div><div id="pumpplot"></div>
+ </section>
+
+ <section id="sprung" class="tab panel" role="tabpanel">
+  <h2>5 · SPRUNG-OS · 3×3 Raster</h2>
+  <p>Manhattan-Distanz d = |r₁−r₂| + |c₁−c₂|, maximal 4. Klicke erst den Start (gelb), dann das Ziel (türkis).</p>
+  <div class="cells" id="cells"></div><div class="result" id="jumpout"></div>
+ </section>
+
+ <section id="koop" class="tab panel" role="tabpanel">
+  <h2>6 · TEAM-KOOP · PX + BEN</h2>
+  <div class="grid"><label><input type="checkbox" id="px" checked> PX bereit</label><label><input type="checkbox" id="ben" checked> BEN bereit</label></div>
+  <div class="result" id="koopout"></div><table id="kooptab"></table>
+ </section>
+
+ <section id="inspektor" class="tab panel" role="tabpanel">
+  <h2>7 · INSPEKTOR · Nutzen und Speicherregel</h2>
+  <p>Freigabe nur bei Nutzen &gt; 80 (Summe der drei Teilwerte) und mindestens 3 Spielen.</p>
+  <div class="grid"><div><label for="win">Gewinn</label><input id="win" type="number" value="30"></div><div><label for="reach">Reichweite</label><input id="reach" type="number" value="30"></div><div><label for="surprise">Überraschung</label><input id="surprise" type="number" value="30"></div><div><label for="games">Spiele</label><input id="games" type="number" value="3"></div></div>
+  <div class="bar" id="ibar"></div><div class="result" id="inspectout"></div>
+ </section>
+
+ <section id="sli" class="tab panel" role="tabpanel">
+  <h2>8 · SLI · Schalter muss wirklich freigeben</h2>
+  <label><input type="checkbox" id="switch" checked> Schalter geschlossen</label>
+  <div class="grid"><div class="result">Sprung frei: <b id="jumpfree"></b></div><div class="result">Tick frei: <b id="tickfree"></b></div></div>
+  <p class="small">Beide Freigaben werden aus demselben Schalterzustand abgeleitet, sie können nicht auseinanderlaufen.</p>
+ </section>
+
+ <section id="burro" class="tab panel" role="tabpanel">
+  <h2>9 · EL BURRO · Tragfähigkeit und Ausweg</h2>
+  <p>Was trägt die Lösung, wenn Tempo, Glanz oder Überraschung nicht weiterhelfen? Der Esel trägt schrittweise, begrenzt die Last und wählt bei Überlast mehrere Gänge statt einer Überladung.</p>
+  <div class="pent" id="pent"></div><div class="result" id="chiptxt">Wähle ein Tier.</div>
+  <div class="grid"><div><label for="bload">Gesamtlast: <b id="bloadv"></b></label><input id="bload" type="range" min="0" max="300" value="190"></div><div><label for="bcap">Tragelimit pro Gang: <b id="bcapv"></b></label><input id="bcap" type="range" min="20" max="120" step="10" value="80"></div></div>
+  <div class="result" id="burroout"></div>
+  <p class="small">Die Tierbilder sind lokale Metaphern. Eine universelle oder kulturübergreifende Bestätigung bräuchte konkrete Quellen und klare Prüfkriterien.</p>
+ </section>
+
+ <section class="panel" style="margin-top:18px" id="check">
+  <h2>Prüfarchitektur · 9 → 81 → 729</h2>
+  <p>Zeilen sind die 9 Module, Spalten die 9 Prüfperspektiven. Grün heißt Test bestanden, rot durchgefallen, grau noch kein Test. Klicke ein Feld für Details.</p>
+  <div class="mx" id="matrix"></div><div class="result" id="celltxt">Kein Feld gewählt.</div>
+  <p><button class="action" id="rerun">Matrix neu prüfen</button> <button class="action" id="fuzz">729 Zufallsproben</button></p>
+  <div class="result" id="fuzzout">Noch nicht ausgeführt.</div>
+  <p class="small">Ein bestandener Test belegt nur das getestete Verhalten. Abdeckung ist nicht Wahrheit, und die 729 Proben prüfen nur Invarianten (Idempotenz, Monotonie, Symmetrie).</p>
+ </section>
+ <footer>NC COMMAND · lokale Demo · keine Netzwerkverbindung · keine reale Hardwaresteuerung</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=id=>$(id).value===""?NaN:Number($(id).value);
+/* ---------- Logik (rein, testbar) ---------- */
+const home40=x=>Number.isFinite(x)?(x<39?x:40):NaN;
+const axiom=x=>({daten:x,meta:"HOME 40",mechanik:"home40(x)",ergebnis:home40(x)});
+const RULES=[[/(?<![\d.])43(?![\d.])/g,"40"],[/(?<![\d.])999(?![\d.])/g,"9"],[/±/g,"exakt"]];
+function mist(t){const ch=[];let o=t;for(const [re,r] of RULES){const n=(o.match(re)||[]).length;if(n){ch.push([re.source,r,n]);o=o.replace(re,r)}}return{out:o,ch}}
+const AMB=40,COOL=3,LIMIT=85;
+const fresh=()=>({pump:false,temp:AMB,ticks:0,score:0,hist:[AMB]});
+function pumpRun(s,load,n=9){
+ if(!s.pump)return{...s,blocked:true,msg:"BLOCKIERT: RUN ohne Pumpe"};
+ let t=s.temp,k=s.ticks,sc=s.score;const h=[...s.hist];
+ for(let i=0;i<n;i++){t=Math.max(AMB,t+1+.8*load-COOL);k++;sc+=load;h.push(t);
+  if(t>LIMIT)return{...s,temp:t,ticks:k,score:sc,hist:h,halted:true,msg:`NOT-HALT bei ${t.toFixed(1)} °C nach Tick ${i+1} von ${n}`}}
+ return{...s,temp:t,ticks:k,score:sc,hist:h,msg:`RUN OK · ${n} Ticks · ${t.toFixed(1)} °C`};
+}
+const dist=(a,b)=>Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1]);
+const jumpName=d=>d===0?"KEIN SPRUNG – STEHEN":d===1?"KLEINER SPRUNG":d===2?"GROSSER SPRUNG":"QUANTEN-SPRUNG – CONT";
+const koopLogic=(a,b)=>a&&b?"KOOP AKTIV – ZUSAMMEN":a||b?"HALB – WARTET AUF ANDEREN":"KEIN KOOP – BEIDE FEHLEN";
+const insp=(w,r,s,g)=>{const n=w+r+s;return{n,okN:n>80,okG:g>=3,free:n>80&&g>=3}};
+const sli=s=>({jump:!!s,tick:!!s});
+const trips=(L,cap)=>L<=0?0:Math.ceil(L/cap);
+/* ---------- Tests: [Modul, Perspektive, Name, Funktion] ---------- */
+const MODS=["AXIOM","HOME 40","MIST RAUS","GPU-PUMPE","SPRUNG-OS","TEAM-KOOP","INSPEKTOR","SLI","EL BURRO"];
+const PERS=["Normalfall","Grenzfall","Wiederholung","Ablehnung","Extremwert","Symmetrie","Ungültig","Zustand","Monotonie"];
+const S=Array.from({length:400},(_,i)=>-100+i*.75);
+const CELLS=[...Array(9).keys()].map(i=>[Math.floor(i/3),i%3]);
+const T=[
+[0,0,"axiom(43) ergibt 40",()=>axiom(43).ergebnis===40],
+[0,1,"axiom(39) ergibt 40",()=>axiom(39).ergebnis===40],
+[0,6,"axiom(NaN) bleibt NaN",()=>Number.isNaN(axiom(NaN).ergebnis)],
+[1,0,"home40(10) = 10",()=>home40(10)===10],
+[1,1,"38,999 bleibt, 39 wird 40",()=>home40(38.999)===38.999&&home40(39)===40],
+[1,2,"f(f(x)) = f(x) auf 400 Proben",()=>S.every(x=>home40(home40(x))===home40(x))],
+[1,4,"1e9 ergibt 40",()=>home40(1e9)===40],
+[1,8,"monoton auf 400 Proben",()=>S.every((x,i)=>!i||home40(S[i-1])<=home40(x))],
+[2,0,"43 wird zu 40",()=>mist("a 43 b").out==="a 40 b"],
+[2,2,"Regel ist idempotent",()=>{const t="Regel 43 999 ±";return mist(mist(t).out).out===mist(t).out}],
+[2,3,"143 und 4.43 bleiben",()=>mist("143 und 4.43").out==="143 und 4.43"],
+[3,0,"Last 1 mit Pumpe bleibt bei 40 °C",()=>pumpRun({...fresh(),pump:true},1).temp===40],
+[3,3,"RUN ohne Pumpe blockiert",()=>pumpRun(fresh(),1).blocked===true],
+[3,4,"Last 10 löst Not-Halt aus",()=>pumpRun({...fresh(),pump:true},10).halted===true],
+[3,7,"Reset-Zustand korrekt",()=>{const s=fresh();return s.temp===40&&s.ticks===0&&!s.pump}],
+[4,0,"(0,0) nach (2,2) ergibt d=4",()=>dist([0,0],[2,2])===4],
+[4,1,"gleiche Zelle ergibt d=0",()=>dist([1,1],[1,1])===0],
+[4,5,"Symmetrie über alle 81 Paare",()=>CELLS.every(a=>CELLS.every(b=>dist(a,b)===dist(b,a)))],
+[5,0,"beide bereit: aktiv",()=>koopLogic(true,true).startsWith("KOOP AKTIV")],
+[5,3,"keiner bereit: kein Koop",()=>koopLogic(false,false).startsWith("KEIN")],
+[5,5,"PX/BEN vertauschbar",()=>koopLogic(true,false)===koopLogic(false,true)],
+[6,0,"30/30/30 und 3 Spiele: frei",()=>insp(30,30,30,3).free],
+[6,1,"Nutzen genau 80: nicht frei",()=>!insp(30,30,20,3).free],
+[6,3,"nur 2 Spiele: nicht frei",()=>!insp(40,40,40,2).free],
+[7,0,"geschlossen: beides frei",()=>{const r=sli(true);return r.jump&&r.tick}],
+[7,3,"offen: beides gesperrt",()=>{const r=sli(false);return !r.jump&&!r.tick}],
+[7,5,"Sprung und Tick stets gleich",()=>[true,false].every(s=>sli(s).jump===sli(s).tick)],
+[8,0,"Last 80 bei Limit 80: 1 Gang",()=>trips(80,80)===1],
+[8,1,"Last 81: 2 Gänge",()=>trips(81,80)===2],
+[8,3,"Last 0: kein Gang",()=>trips(0,80)===0],
+[8,4,"Last 1000: 13 Gänge",()=>trips(1000,80)===13]
+];
+let RES=[];
+function runAll(){
+ RES=T.map(([m,p,n,f])=>{let ok=false;try{ok=!!f()}catch(e){}return{m,p,n,ok}});
+ let h='<table><tr><th>Modul</th>'+PERS.map((p,i)=>`<th title="${p}">${i+1}</th>`).join('')+'</tr>';
+ MODS.forEach((mn,m)=>{h+=`<tr><td>${mn}</td>`;PERS.forEach((pn,p)=>{const r=RES.findIndex(x=>x.m===m&&x.p===p);h+=`<td><button data-r="${r}" data-m="${m}" data-p="${p}" class="${r<0?"":RES[r].ok?"p":"x"}" title="${pn}">${r<0?"·":RES[r].ok?"✓":"✗"}</button></td>`});h+='</tr>'});
+ $("matrix").innerHTML=h+'</table><p class="small">Spalten: '+PERS.map((p,i)=>`${i+1} ${p}`).join(" · ")+'</p>';
+ const ok=RES.filter(r=>r.ok).length;
+ $("m81").textContent=`${RES.length}`+(ok<RES.length?` (${RES.length-ok} ✗)`:"");
+}
+function fuzz(){
+ const r=Math.random;let bad=0;
+ for(let i=0;i<729;i++){const x=r()*300-100,y=x+r()*50,a=[r()*3|0,r()*3|0],b=[r()*3|0,r()*3|0],p=r()<.5,q=r()<.5;
+  if(home40(home40(x))!==home40(x)||home40(x)>home40(y)||dist(a,b)!==dist(b,a)||koopLogic(p,q)!==koopLogic(q,p))bad++}
+ $("m729").textContent=bad;
+ $("fuzzout").innerHTML=bad?`<span class="bad">${bad} Verstöße bei 729 Proben</span>`:`<span class="good">0 Verstöße bei 729 Zufallsproben</span>`;
+}
+/* ---------- UI ---------- */
+const TABS=[["axiom","1 · AXIOM"],["home","2 · HOME 40"],["mist","3 · MIST RAUS"],["gpu","4 · GPU-PUMPE"],["sprung","5 · SPRUNG-OS"],["koop","6 · TEAM-KOOP"],["inspektor","7 · INSPEKTOR"],["sli","8 · SLI / FREIGABE"],["burro","9 · EL BURRO"]];
+function show(id){
+ if(!TABS.some(t=>t[0]===id))id="axiom";
+ document.querySelectorAll(".tab").forEach(s=>s.classList.toggle("active",s.id===id));
+ document.querySelectorAll("#nav button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===id)));
+ try{history.replaceState(null,"","#"+id)}catch(e){}
+}
+$("nav").innerHTML=TABS.map(([id,l])=>`<button role="tab" data-tab="${id}">${l}</button>`).join("");
+$("nav").addEventListener("click",e=>{const b=e.target.closest("button");if(b)show(b.dataset.tab)});
+function updAxiom(){$("axout").textContent=JSON.stringify(axiom(num("axval")),(k,v)=>typeof v==="number"&&!isFinite(v)?String(v):v,2)}
+function plot(x){
+ const sx=v=>20+Math.min(Math.max(v,0),80)*3.5,sy=v=>140-Math.min(Math.max(v,0),50)*2.6,y=home40(x);
+ return `<svg viewBox="0 0 310 160" role="img" aria-label="Graph von home40"><line x1="20" y1="140" x2="300" y2="140" stroke="var(--line)"/><line x1="20" y1="10" x2="20" y2="140" stroke="var(--line)"/><polyline fill="none" stroke="var(--cyan)" stroke-width="2.5" points="${sx(0)},${sy(0)} ${sx(39)},${sy(39)}"/><line x1="${sx(39)}" y1="${sy(39)}" x2="${sx(39)}" y2="${sy(40)}" stroke="var(--gold)" stroke-dasharray="3 3"/><polyline fill="none" stroke="var(--cyan)" stroke-width="2.5" points="${sx(39)},${sy(40)} ${sx(80)},${sy(40)}"/>${Number.isFinite(y)?`<circle cx="${sx(x)}" cy="${sy(y)}" r="6" fill="var(--gold)"/>`:""}<text x="24" y="22" fill="var(--muted)" font-size="10">y = home40(x), x von 0 bis 80</text></svg>`;
+}
+function updHome(src){
+ if(src)(src==="r"?$("homeval"):$("homerange")).value=(src==="r"?$("homerange"):$("homeval")).value;
+ const x=num("homeval"),y=home40(x);
+ $("homeout").innerHTML=Number.isNaN(y)?'<span class="warn">Ungültige Eingabe, Ergebnis NaN</span>':`f(${x}) = <b>${y}</b> · ${x<39?"unverändert":"eingerastet auf 40"} · f(f(x)) = ${home40(y)} <span class="${home40(y)===y?"good":"bad"}">${home40(y)===y?"idempotent":"Fehler"}</span>`;
+ $("homeplot").innerHTML=plot(x);
+}
+function updMist(){const r=mist($("misttext").value);$("mistout").innerHTML=`<code>${esc(r.out)}</code><br>`+(r.ch.length?r.ch.map(c=>`<span class="small">${c[2]}× ersetzt durch „${esc(c[1])}“</span>`).join("<br>"):'<span class="small">Nichts zu korrigieren.</span>')+`<br><span class="good">Zweiter Durchlauf ändert nichts: ${mist(r.out).out===r.out?"ja":"nein"}</span>`}
+let P=fresh();
+function pumpView(msg,cls){
+ $("pst").textContent=P.pump?"AN":"AUS";$("ptmp").textContent=P.temp.toFixed(1)+" °C";$("psc").textContent=P.ticks+" / "+P.score;
+ $("pumpout").innerHTML=`<span class="${cls||""}">${esc(msg)}</span>`;
+ const hh=P.hist.slice(-60),n=Math.max(hh.length-1,1),px=i=>10+i*290/n,py=v=>110-(Math.min(Math.max(v,30),110)-30)*1;
+ $("pumpplot").innerHTML=`<svg viewBox="0 0 310 120"><line x1="10" x2="300" y1="${py(LIMIT)}" y2="${py(LIMIT)}" stroke="var(--red)" stroke-dasharray="4 3"/><text x="14" y="${py(LIMIT)-3}" fill="var(--red)" font-size="9">Not-Halt 85 °C</text><line x1="10" x2="300" y1="${py(AMB)}" y2="${py(AMB)}" stroke="var(--line)"/><polyline fill="none" stroke="var(--cyan)" stroke-width="2" points="${hh.map((v,i)=>px(i)+","+py(v)).join(" ")}"/></svg>`;
+}
+function setP(r){const {blocked,halted,msg,...ns}=r;P=ns;pumpView(msg,blocked||halted?"bad":"good")}
+$("load").oninput=()=>$("loadv").textContent=$("load").value;
+$("pumptog").onclick=()=>{P={...P,pump:!P.pump};pumpView(P.pump?"PUMPE AN":"PUMPE AUS · RUN gesperrt")};
+$("pumprun").onclick=()=>setP(pumpRun(P,+$("load").value));
+$("pumpidle").onclick=()=>{if(!P.pump){pumpView("Ohne Pumpe keine Kühlung","warn");return}const h=[...P.hist];let t=P.temp;for(let i=0;i<3;i++){t=Math.max(AMB,t-COOL);h.push(t)}P={...P,temp:t,hist:h};pumpView("Leerlauf · "+t.toFixed(1)+" °C","good")};
+$("pumpreset").onclick=()=>{P=fresh();pumpView("Reset abgeschlossen")};
+let J={from:[0,0],to:[2,2],next:"from"};
+function updJump(){
+ $("cells").innerHTML=CELLS.map(c=>`<button data-r="${c[0]}" data-c="${c[1]}" class="${c+""===J.from+""?"f":c+""===J.to+""?"t":""}" aria-label="Zeile ${c[0]+1}, Spalte ${c[1]+1}">${c[0]},${c[1]}</button>`).join("");
+ const d=dist(J.from,J.to);$("jumpout").textContent=`${jumpName(d)} · d=${d}`;
+}
+$("cells").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;J[J.next]=[+b.dataset.r,+b.dataset.c];J.next=J.next==="from"?"to":"from";updJump()});
+function updKoop(){
+ const a=$("px").checked,b=$("ben").checked;$("koopout").textContent=koopLogic(a,b);
+ $("kooptab").innerHTML="<tr><th>PX</th><th>BEN</th><th>Ergebnis</th></tr>"+[[1,1],[1,0],[0,1],[0,0]].map(([p,q])=>`<tr class="${p==+a&&q==+b?"cur":""}"><td>${p?"✓":"✗"}</td><td>${q?"✓":"✗"}</td><td>${koopLogic(!!p,!!q)}</td></tr>`).join("");
+}
+function updInsp(){
+ const w=num("win")||0,r=num("reach")||0,s=num("surprise")||0,g=num("games")||0,v=insp(w,r,s,g),mx=Math.max(120,v.n),pc=x=>Math.max(0,x)/mx*100;
+ $("ibar").innerHTML=`<i style="width:${pc(w)}%;background:var(--cyan)"></i><i style="width:${pc(r)}%;background:var(--gold)"></i><i style="width:${pc(s)}%;background:var(--green)"></i><span class="mark" style="left:${80/mx*100}%" title="Schwelle 80"></span>`;
+ $("inspectout").innerHTML=`Nutzen = <b>${v.n}</b> <span class="${v.okN?"good":"warn"}">${v.okN?"✓ größer als 80":"✗ nicht größer als 80"}</span><br>Spiele = <b>${g}</b> <span class="${v.okG?"good":"warn"}">${v.okG?"✓ mindestens 3":"✗ weniger als 3"}</span><br><b class="${v.free?"good":"warn"}">${v.free?"TUNE-UP FREI":"NICHT SPEICHERN – Regel nicht erfüllt"}</b>`;
+}
+function updSli(){const r=sli($("switch").checked);$("jumpfree").textContent=r.jump?"JA":"NEIN";$("tickfree").textContent=r.tick?"JA":"NEIN"}
+const ANI=[["VOGEL","Unschuld / Blick: sieht den Weg von oben, trägt nichts."],["SCHILDKRÖTE","Ausdauer: langsam, aber sie kommt an."],["HASE","Tempo: schnell, doch nur bei leichter Last."],["BÄR","Kraft: schiebt Hindernisse weg, braucht viel Ressource."],["FUCHS","Strategie: wählt den Pfad und die Reihenfolge der Gänge."]];
+$("pent").innerHTML=ANI.map((a,i)=>`<button class="chip" aria-pressed="false" data-i="${i}">${a[0]}</button>`).join("");
+$("pent").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;document.querySelectorAll("#pent .chip").forEach(c=>c.setAttribute("aria-pressed",String(c===b)));$("chiptxt").innerHTML=`<b>${ANI[b.dataset.i][0]}</b> · ${ANI[b.dataset.i][1]}`});
+function updBurro(){
+ const L=+$("bload").value,cap=+$("bcap").value,n=trips(L,cap);$("bloadv").textContent=L;$("bcapv").textContent=cap;
+ let seg="";for(let i=0;i<n;i++){const part=Math.min(cap,L-i*cap);seg+=`<i style="width:${part/L*100}%;background:${i%2?"var(--gold)":"var(--cyan)"}" title="Gang ${i+1}: ${part}"></i>`}
+ $("burroout").innerHTML=n===0?"Keine Last, der Esel bleibt stehen.":`<b class="${n===1?"good":"warn"}">${n===1?"Passt in einem Gang":"Überlast: ANHALTEN und in "+n+" Gänge teilen"}</b><div class="bar">${seg}</div><span class="small">Gesamtlast ${L}, Limit ${cap}, letzter Gang ${L-(n-1)*cap}</span>`;
+}
+$("axval").oninput=updAxiom;$("homeval").oninput=()=>updHome("v");$("homerange").oninput=()=>updHome("r");$("misttext").oninput=updMist;
+["px","ben"].forEach(i=>$(i).onchange=updKoop);["win","reach","surprise","games"].forEach(i=>$(i).oninput=updInsp);
+$("switch").onchange=updSli;$("bload").oninput=updBurro;$("bcap").oninput=updBurro;
+$("rerun").onclick=runAll;$("fuzz").onclick=fuzz;
+$("matrix").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const r=+b.dataset.r;$("celltxt").innerHTML=r<0?`<b>${MODS[b.dataset.m]} × ${PERS[b.dataset.p]}</b><br><span class="small">Hier gibt es noch keinen Test.</span>`:`<b>${MODS[RES[r].m]} × ${PERS[RES[r].p]}</b><br>${esc(RES[r].n)} · <span class="${RES[r].ok?"good":"bad"}">${RES[r].ok?"bestanden":"DURCHGEFALLEN"}</span>`});
+updAxiom();updHome();updMist();pumpView("RUN ist blockiert, solange die Pumpe AUS ist.");updJump();updKoop();updInsp();updSli();updBurro();runAll();fuzz();
+show(location.hash.slice(1));
+</script>
+</body>
+</html>
