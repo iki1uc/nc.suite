@@ -1,0 +1,37 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NC.OS · Code-Prüfer</title>
+<style>:root{color-scheme:dark;--bg:#070b10;--panel:#101820;--line:#263642;--text:#e0e9ed;--muted:#91a4aa;--mint:#65f0b0;--yellow:#ffd166;--red:#ff6478}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:20px;background:var(--bg);color:var(--text);font:14px/1.55 ui-monospace,Consolas,monospace}
+header,main{width:min(1050px,100%);margin:0 auto}header{margin-bottom:18px}h1{color:var(--mint);font-size:22px;margin:0 0 4px}h2{color:var(--mint);font-size:14px;margin:0 0 10px}p{color:var(--muted);margin:5px 0}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.box{min-width:0;padding:14px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}.wide{grid-column:1/-1}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}.stat{padding:10px;border:1px solid var(--line);border-radius:7px;color:var(--muted)}.stat b{display:block;color:var(--mint);font-size:22px}
+button{padding:8px 11px;border:1px solid var(--mint);border-radius:6px;background:#07110d;color:var(--mint);cursor:pointer;font:inherit}button:hover{background:#10251b}
+pre{max-height:290px;overflow:auto;padding:11px;border:1px solid var(--line);border-radius:7px;background:#05080b;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere}
+.issue{padding:7px 0;border-bottom:1px solid var(--line)}.error{color:var(--red)}.warning{color:var(--yellow)}.ok{color:var(--mint)}.muted{color:var(--muted)}
+@media(max-width:700px){body{padding:12px}.grid{grid-template-columns:1fr}.wide{grid-column:auto}}</style></head>
+<body><header><h1>NC.OS · Code-Prüfer</h1><p>Prüft HTML, CSS und JavaScript auf doppelte Regeln, tote Elemente, ungenutzte Variablen, lange Zeilen. <b>Lokal im Browser. Liest nur, schreibt nichts, löscht nichts.</b> Die alten Namen reads/tx/respo/bund/verified sind hier bewusst NICHT mehr als Statistik-Namen benutzt — das waren Demo-Werte, keine Messung.</p></header>
+<main class="grid">
+<section class="box wide"><h2>Quelldatei prüfen</h2><div style="display:flex;gap:10px;flex-wrap:wrap"><input id="fileInput" type="file" accept=".html,.htm,.js,.css,.txt"><button id="sampleButton" type="button">Beispiel prüfen</button></div><p id="fileStatus" aria-live="polite">Wähle eine Datei oder prüfe das eingebaute Beispiel.</p></section>
+<section class="box wide"><h2>Prüfergebnis</h2><div class="stats"><div class="stat">Prüfungen<b id="statChecks">0</b></div><div class="stat">Befunde<b id="statFindings">0</b></div><div class="stat">Schwere Fehler<b id="statErrors">0</b></div><div class="stat">Vertrauen (Heuristik)<b id="statScore">—</b></div></div><p id="statResult" class="muted">Noch keine Datei geprüft.</p></section>
+<section class="box"><h2>Zusammenfassung</h2><div id="summary" class="muted">Noch keine Prüfung.</div></section>
+<section class="box"><h2>Befunde</h2><div id="issues" class="muted">Noch keine Befunde.</div></section>
+<section class="box wide"><h2>Vorschau des eingelesenen Quelltexts</h2><pre id="sourcePreview">Noch keine Datei geladen.</pre></section>
+</main><script>
+"use strict";const $=id=>document.getElementById(id);let checks=0;
+const sampleHTML=`<!DOCTYPE html><html><head><style>.box{color:#65f0b0}.box{color:#65f0b0}</style></head><body><div id="tote-box">sieht keiner</div><div id="haupt">Haupt</div><script>const READS_DEMO=91;let unbenutzt=42;const haupt=document.getElementById('haupt');const geist=document.getElementById('gibt-es-nicht');function ladeDaten(){return READS_DEMO}function ladeDaten(){return 0}<\/script></body></html>`;
+function esc(v){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function analyze(s){const iss=[],add=(t,m)=>iss.push({type:t,message:m});const noCom=s.replace(/<!--[\s\S]*?-->/g,"");const css=[...s.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)].map(m=>m[1]).join("\n");const js=[...s.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(m=>m[1]).join("\n");
+const ids=[...noCom.matchAll(/\bid\s*=\s*["']([^"']+)["']/gi)].map(m=>m[1]);const cnt=new Map();ids.forEach(i=>cnt.set(i,(cnt.get(i)||0)+1));for(const [i,c] of cnt)if(c>1)add("warning",`ID "${i}" kommt ${c}-mal vor.`);
+const refs=new Set();for(const m of js.matchAll(/getElementById\s*\(\s*["']([^"']+)["']\s*\)/g))refs.add(m[1]);for(const i of ids)if(!refs.has(i)&&/(tote|alt|obsolete|deprecated|dead|hidden)/i.test(i))add("warning",`Möglicherweise ungenutzte DOM-ID "${i}".`);for(const i of refs)if(!cnt.has(i))add("error",`getElementById verweist auf fehlendes Element "${i}".`);
+const seen=new Map();let m;const rp=/([^{}]+)\{([^{}]*)\}/g;while((m=rp.exec(css))!==null){const sel=m[1].trim().replace(/\s+/g," "),body=m[2].trim().replace(/\s+/g," ");if(!sel||sel.startsWith("@"))continue;if(seen.has(sel))add("warning",`CSS-Selektor "${sel}" mehrfach definiert.`);else seen.set(sel,body)}
+const fn=new Map();const fp=/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g;while((m=fp.exec(js))!==null)fn.set(m[1],(fn.get(m[1])||0)+1);for(const [n,c] of fn)if(c>1)add("error",`Funktion "${n}" ist ${c}-mal deklariert.`);
+const dp=/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=/g;while((m=dp.exec(js))!==null){const n=m[1];const occ=(js.match(new RegExp("\\b"+n.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b","g"))||[]).length;if(occ===1)add("warning",`Variable "${n}" scheint unbenutzt.`)}
+s.split(/\r?\n/).forEach((l,i)=>{if(l.length>200)add("warning",`Zeile ${i+1} ist ${l.length} Zeichen lang (Grenze 200).`)});if(/\bTODO\b/i.test(s))add("warning","TODO-Kommentar gefunden.");if(/<!--[\s\S]*?-->|^\s*\/\/\s*(?:const|let|var|function)\b/m.test(s))add("warning","Auskommentierter Code gefunden.");if(/<\s*(?:font|center|marquee)\b/i.test(s))add("warning","Veraltetes HTML-Element gefunden.");return iss}
+function render(src,name){checks++;const iss=analyze(src);const err=iss.filter(i=>i.type==="error").length,warn=iss.filter(i=>i.type==="warning").length;const score=Math.max(0,1-err*.2-warn*.04);
+$("statChecks").textContent=checks;$("statFindings").textContent=iss.length;$("statErrors").textContent=err;$("statScore").textContent=score.toFixed(2);
+$("statResult").textContent=err===0?`Prüfung abgeschlossen: ${name} · keine schweren Fehler.`:`Prüfung abgeschlossen: ${name} · ${err} schwere Fehler.`;$("statResult").className=err===0?"ok":"error";
+$("summary").innerHTML=`<div>Datei: <b>${esc(name)}</b></div><div>Zeichen: <b>${src.length}</b></div><div>Hinweise: ${warn}</div><div>Schwere Fehler: ${err}</div><div class="muted">Vertrauen = Heuristik, kein Beweis. 1.00 heisst nur: dieser Prüfer fand nichts.</div>`;
+$("issues").innerHTML=iss.length?iss.map(i=>`<div class="issue ${i.type}">${esc(i.type.toUpperCase())}: ${esc(i.message)}</div>`).join(""):'<div class="ok">Keine Befunde.</div>';
+$("sourcePreview").textContent=src.length>12000?src.slice(0,12000)+"\n… gekürzt …":src;$("fileStatus").textContent=`Geprüft: ${name}`}
+$("sampleButton").addEventListener("click",()=>render(sampleHTML,"NC.OS-Beispiel"));
+$("fileInput").addEventListener("change",async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;try{render(await f.text(),f.name)}catch(err){$("fileStatus").textContent="Datei konnte nicht gelesen werden: "+err.message}});
+</script></body></html>
